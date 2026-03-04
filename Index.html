@@ -1,0 +1,203 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Компетенции по строительству, проектам и обучению</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #3f51b5;
+            color: white;
+            padding: 20px 10px;
+            text-align: center;
+        }
+
+        nav {
+            background: #283593;
+            padding: 10px 0;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+            nav button {
+                background: #5c6bc0;
+                color: white;
+                border: none;
+                margin: 5px 10px;
+                padding: 10px 20px;
+                cursor: pointer;
+                border-radius: 4px;
+                transition: background 0.3s;
+            }
+
+                nav button:hover {
+                    background: #3949ab;
+                }
+
+        main {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 10px;
+            position: relative;
+        }
+
+        /* Древовидный список базовый стиль */
+        .tree {
+            list-style: none;
+            padding-left: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+            .tree li {
+                margin-bottom: 8px;
+                cursor: pointer;
+                position: relative;
+                background: linear-gradient(135deg, #4a90e2, #357abd);
+                color: #fff;
+                padding: 12px 15px;
+                border-radius: 8px;
+                box-shadow: 0 5px 12px rgba(53,122,189,0.4);
+                transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.4s ease;
+            }
+
+                .tree li:hover {
+                    transform: scale(1.05);
+                    box-shadow: 0 12px 24px rgba(53,122,189,0.7);
+                    background: linear-gradient(135deg, #6ea0ee, #4a6fc7);
+                }
+
+                .tree li::before {
+                    content: "▶️";
+                    position: absolute;
+                    left: -20px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    font-size: 14px;
+                    color: #eee;
+                    transition: transform 0.2s;
+                }
+
+                .tree li.expanded::before {
+                    transform: translateY(-50%) rotate(90deg);
+                }
+
+            .tree ul {
+                display: none;
+                padding-left: 20px;
+                margin-top: 8px;
+            }
+
+                .tree ul.open {
+                    display: block;
+                }
+
+        /* SVG соединения */
+
+        svg.connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 900px;
+            height: 1000px; /* при необходимости подкорректируйте */
+            pointer-events: none;
+            z-index: 1;
+        }
+
+            svg.connections path {
+                stroke: #4a90e2;
+                stroke-width: 3;
+                fill: none;
+                opacity: 0.7;
+                stroke-dasharray: 150;
+                stroke-dashoffset: 150;
+                transition: stroke-dashoffset 0.6s ease;
+            }
+
+            /* При наведении на блок линия  */
+            .tree li:hover ~ svg.connections path,
+            svg.connections:hover path {
+                stroke-dashoffset: 0;
+                opacity: 1;
+            }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Мои компетенции и опыт</h1>
+        <p>Строительство, управление сложными проектами и обучение</p>
+    </header>
+
+    <nav&gt>
+        <button data-target="building">Строительство домов</button>
+        <button data-target="project">Руководство проектами</button>
+        <button data-target="training">Обучение и наставничество</button>
+        </nav&gt>
+
+        <main>
+            <ul class="tree" id="skillTree">
+                <li id="block1">
+                    Строительство домов
+                    <ul>
+                        <li id="block1-1">Проектирование</li>
+                        <li id="block1-2">Закупка материалов</li>
+                    </ul>
+                </li>
+                <li id="block2">
+                    Руководство проектами
+                    <ul>
+                        <li id="block2-1">Планирование</li>
+                        <li id="block2-2">Контроль сроков</li>
+                    </ul>
+                </li>
+                <li id="block3">
+                    Обучение и наставничество
+                    <ul>
+                        <li id="block3-1">Подготовка материалов</li>
+                        <li id="block3-2">Проведение тренингов</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <svg class="connections" width="900" height="300" xmlns="http://www.w3.org/2000/svg">
+                <!-- Соединяем корневые блоки -->
+                <path d="M 160 35 C 230 35, 280 35, 350 35" />
+                <path d="M 350 35 C 420 35, 470 35, 540 35" />
+
+                <!-- Соединения с подвложенными элементами -->
+                <path d="M 140 75 L 140 110 C 140 120, 105 120, 105 135" />
+                <path d="M 180 75 L 180 110 C 180 120, 215 120, 215 135" />
+
+                <path d="M 330 75 L 330 110 C 330 120, 295 120, 295 135" />
+                <path d="M 370 75 L 370 110 C 370 120, 405 120, 405 135" />
+
+                <path d="M 520 75 L 520 110 C 520 120, 485 120, 485 135" />
+                <path d="M 560 75 L 560 110 C 560 120, 595 120, 595 135" />
+            </svg>
+        </main>
+
+        <script>
+            // Раскрытие вложенных списков при клике
+            document.querySelectorAll('.tree li').forEach(li => {
+                li.addEventListener('click', e => {
+                    e.stopPropagation();
+                    li.classList.toggle('expanded');
+                    const childUl = li.querySelector('ul');
+                    if (childUl) {
+                        childUl.classList.toggle('open');
+                    }
+                });
+            });
+        </script>
+
+</body>
+</html>
