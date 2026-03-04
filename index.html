@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Life Skill Tree</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --green: #2e7d32;       /* Directions */
+      --light-green: #66bb6a; /* Skills */
+      --ability-blue: #03a9f4; /* Abilities */
+      --text-on-green: #ffffff;
+      --line: #cfd8dc;
+      --shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      --transition: 0.2s ease-out;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: var(--bg);
+      color: #222;
+      line-height: 1.4;
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 12px 48px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #263238;
+    }
+
+    .header-subtitle {
+      font-size: 0.9rem;
+      color: #607d8b;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    /* Tree Layout */
+
+    .tree-wrapper {
+      overflow-x: hidden;
+      padding-bottom: 16px;
+    }
+
+    .tree {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .tree-root {
+      margin-bottom: 24px;
+    }
+
+    .tree-root:after {
+      content: "";
+      display: block;
+      width: 2px;
+      height: 20px;
+      background: var(--line);
+      margin: 8px auto 0;
+    }
+
+    .node {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px 8px 30px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      color: var(--text-on-green);
+      cursor: pointer;
+      white-space: nowrap;
+      transition:
+        transform var(--transition),
+        box-shadow var(--transition),
+        background-color var(--transition);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+    }
+
+    .node::before {
+      content: "";
+      position: absolute;
+      left: 8px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.6);
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .node:hover {
+      transform: scale(1.05);
+      box-shadow: var(--shadow);
+      z-index: 10;
+    }
+
+    .node-root {
+      background: #263238;
+      color: #eceff1;
+      padding-left: 36px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      cursor: default;
+    }
+
+    .node-direction {
+      background: var(--green);
+      font-weight: 600;
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .node-skill {
+      background: var(--light-green);
+      font-weight: 500;
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .node-ability {
+      background: var(--ability-blue); /* light blue as requested */
+      font-weight: 400;
+      font-size: 0.85rem;
+      padding: 6px 12px 6px 28px;
+      cursor: pointer;
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    /* Hierarchical layout: Directions stacked vertically, lists below */
+
+    .tree-level {
+      display: flex;
+      flex-direction: column;   /* Directions from top to bottom */
+      align-items: stretch;
+      gap: 24px;
+      padding: 8px 0 0;
+      width: 100%;
+    }
+
+    .branch {
+      position: relative;
+      padding-top: 16px;
+    }
+
+    .branch::before {
+      /* vertical line from parent to this branch */
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 16px;
+      width: 0;
+      height: 12px;
+      border-left: 2px solid var(--line);
+    }
+
+    .branch-inner {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .children {
+      position: relative;
+      padding-left: 20px;
+      padding-top: 8px;
+      display: none; /* shown when branch--open */
+    }
+
+    .branch--open > .branch-inner > .children {
+      display: block;
+    }
+
+    .children::before {
+      /* vertical line down from parent to its children list */
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 16px;
+      width: 0;
+      height: 8px;
+      border-left: 2px solid var(--line);
+    }
+
+    .children-row {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+      position: relative;
+    }
+
+    .children-row::before {
+      /* horizontal connector from parent to list */
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 16px;
+      right: 0;
+      border-top: 2px solid var(--line);
+    }
+
+    .children-row > .branch {
+      margin-left: 16px;
+      padding-top: 10px;
+    }
+
+    /* Modal */
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 0 12px;
+    }
+
+    .modal-backdrop.modal--open {
+      display: flex;
+    }
+
+    .modal {
+      background: #ffffff;
+      border-radius: 16px;
+      max-width: 420px;
+      width: 100%;
+      padding: 18px 18px 14px;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.25);
+      position: relative;
+    }
+
+    .modal-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #263238;
+    }
+
+    .modal-body {
+      font-size: 0.85rem;
+      color: #455a64;
+      margin-bottom: 12px;
+      word-break: break-word;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      border: none;
+      background: transparent;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: #78909c;
+      line-height: 1;
+    }
+
+    .modal-footer {
+      text-align: right;
+    }
+
+    .modal-button {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: var(--green);
+      color: #ffffff;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background-color var(--transition),
+        transform var(--transition),
+        box-shadow var(--transition);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+    }
+
+    .modal-button:hover {
+      background: #1b5e20;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+    }
+
+    /* Mobile tweaks */
+
+    @media (max-width: 600px) {
+      .header-title {
+        font-size: 1.5rem;
+      }
+      .header-subtitle {
+        font-size: 0.85rem;
+      }
+      .node {
+        font-size: 0.85rem;
+      }
+      .node-root {
+        font-size: 0.9rem;
+      }
+      .branch::before,
+      .children::before,
+      .children-row::before {
+        left: 12px;
+      }
+      .children {
+        padding-left: 16px;
+      }
+      .children-row > .branch {
+        margin-left: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="header">
+      <h1 class="header-title">Мои навыки</h1>
+      <p class="header-subtitle">
+        Меня зовут Антон Кисляков, сейчас мне 35 лет. Живу в России, г. Екатеринбург.
+        Я создал этот сайт с целью представления информации о моих навыках и опыте. 
+        Надеюсь, этот сайт поможет вам лучше оценить мои навки и возможности, которые по неоторым причинам нельзя вставить в офиицальное резюме.
+        
+        Направления, навыки и умения представлены в виде дерева с раскрывающимся списком.
+        Нажмите на интересующее направление для отображения перечня навыков, соответсвенно нажав на конкретный навык отобразится перечень умений.
+        При нажатии на какое-либо из умений отобразится окно с кратким описанием и/или примерами выполненных проектов.
+      </p>
+    </header>
+
+    <main class="tree-wrapper">
+      <section class="tree" aria-label="Skill Tree">
+        <!-- Root -->
+        <div class="tree-root">
+          <div class="node node-root">
+            Competencies &amp; Experience
+          </div>
+        </div>
+
+        <!-- Directions (stacked vertically) -->
+        <div class="tree-level">
+                    <!-- Construction & Repair -->
+                    <div class="branch">
+                        <div class="branch-inner">
+                          <div
+                            class="node node-direction"
+                            data-title="Строительство и ремонт"
+                            data-description="Полный цикл работ, от проектирования инженерных систем до строительства, отделки и меблировки помещений."
+                          >
+                            Строительство и ремонт
+                          </div>
+            
+                          <div class="children">
+                            <div class="children-row">
+                              <!-- Skill 1: Design and installation of engineering networks -->
+                              <div class="branch">
+                                <div class="branch-inner">
+                                  <div class="node node-skill">
+                                    Проектирование и монтаж инженерных сетей
+                                  </div>
+                                  <div class="children">
+                                    <div class="children-row">
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Электроснабжение"
+                                            data-description="Проектирование и прокладка линий электроснабжения (силовые, освещение, слаботочные) для жилых и коммерческих объектов."
+                                          >
+                                          Электроснабжение
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Водоснабжение"
+                                            data-description="Планирование и прокладка водопроводных труб и точек подключения с использованием труб из полипропилена, сшитого полиэтилена, металлопластика."
+                                          >
+                                            Водоснабжение
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Отопление"
+                                            data-description="Проектирование систем отопления/котельных на электрическом, твердотопливном и газовом топливе, монтаж котельных, радиаторов, систем теплого пола (электрические, водяные, инфракрасные)."
+                                          >
+                                            Отопление
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Канализация"
+                                            data-description="Проектирование и монтаж внутренних и наружных канализационных линий и соединений. Сооружение и установка септиков и выгребных ям"
+                                          >
+                                            Канализация
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Вентиляция"
+                                            data-description="Проектирование и монтаж приточных и вытяжных вентиляционных каналов. Установка рекуператоров."
+                                          >
+                                            Вентиляция
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+            
+                              <!-- Skill 2: Design and visualization -->
+                              <div class="branch">
+                                <div class="branch-inner">
+                                  <div class="node node-skill">
+                                    Проектирование и визуализация
+                                  </div>
+                                  <div class="children">
+                                    <div class="children-row">
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="3D моделирование в Autodesk Revit"
+                                            data-description="Создание BIM-моделей 3D-объектов зданий и инженерных систем в Autodesk Revit для строительства частных домов."
+                                          >
+                                            3D моделирование в Autodesk Revit
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="3D моделирование в Autodesk 3ds Max"
+                                            data-description="Создание детализированной 3D-геометрии интерьеров и экстерьеров в 3ds Max."
+                                          >
+                                            3D моделирование в Autodesk 3ds Max
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Визуализация в Corona"
+                                            data-description="Фотореалистичная визуализация интерьеров и экстерьеров с использованием Corona Renderer."
+                                          >
+                                            Визуализация в Corona
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Визуализация в DreamFlat"
+                                            data-description="Создание визуализаций для концепций квартир в программе DreamFlat, позволяющей создавать простые визализации в VR."
+                                          >
+                                            Визуализация в DreamFlat
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Интерактивная визуализация в VR на Unity"
+                                            data-description="Создание интерактивных визуализаций в VR для проектов домов и квартир с использованием Unity."
+                                          >
+                                            Интерактивная визуализация в VR на Unity
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+            
+                              <!-- Skill 3: Construction of walls and partitions -->
+                              <div class="branch">
+                                <div class="branch-inner">
+                                  <div class="node node-skill">
+                                    Возведение стен и перегородок
+                                  </div>
+                                  <div class="children">
+                                    <div class="children-row">
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Стены из дерева"
+                                            data-description="Возведение стен из массива дерева и каркасных стен с правильным креплением и теплоизоляцией.
+                                            Монтаж и установка каркасных перегородок с использованием гипсокартона, ОСП и других материалов."
+                                          >
+                                            Стены из дерева (массив и каркас)
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Стены из газобетона"
+                                            data-description="Укладка газобетонных блоков с правильным креплением и армированием."
+                                          >
+                                          Стены из газобетона
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Стены из кирпича"
+                                            data-description="Кирпичная кладка для несущих, перегородочных и облицовочных стен."
+                                          >
+                                            Стены из кирпича
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+            
+                              <!-- Skill 4: Wall decoration with prefabricated materials -->
+                              <div class="branch">
+                                <div class="branch-inner">
+                                  <div class="node node-skill">
+                                    Отделка стен, потолков и кровли с использованием сборных материалов
+                                  </div>
+                                  <div class="children">
+                                    <div class="children-row">
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Вагонка"
+                                            data-description="Отделка стен и потолков деревянной вагонкой преимущественно в банях и саунах."
+                                          >
+                                            Вагонка
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Планкен"
+                                            data-description="Отделка стен и потолков планкеном, в том числе со скрытым крепежом."
+                                          >
+                                            Планкен
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Имитация дерева"
+                                            data-description="Отделка стен и потолков имитацией бруса и блок-хаусом."
+                                          >
+                                            Имитация дерева
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Сайдинг"
+                                            data-description="Монтаж пластикового и металлического сайдинга на фасады."
+                                          >
+                                            Сайдинг (пластик и металл)
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Профилированный лист"
+                                            data-description="Монтаж профилированного листа на фасады и кровлю."
+                                          >
+                                            Профилированный лист
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Термопанели"
+                                            data-description="Установка теплоизоляционных панелей, сочетающих изоляцию и декоративную отделку."
+                                          >
+                                            Термопанели
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+            
+                              <!-- Skill 5: Finishing works -->
+                              <div class="branch">
+                                <div class="branch-inner">
+                                  <div class="node node-skill">
+                                    Отделка помещений
+                                  </div>
+                                  <div class="children">
+                                    <div class="children-row">
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Укладка напольных покрытий"
+                                            data-description="Укладка ламината, кварцвинила, линолеума и коврового покрытия с аккуратными переходами."
+                                          >
+                                            Укладка напольных покрытий (ламинат, кварцвинил, линолеум, ковролин)
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Штукатурка стен"
+                                            data-description="Оштукатуривание стен штукатурными смесями, в том числе в деревянных домах с использованием дранки для сцепления."
+                                          >
+                                            Штукатурка стен (в том числе деревянных домов с использованием лесов)
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Шпатлевка стен"
+                                            data-description="Шпатлевание стен, в том числе под покраску."
+                                          >
+                                            Шпатлевка стен
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Окраска стен"
+                                            data-description="Окраска стен с использованием красок с равномерным цветом и окрашиванием."
+                                          >
+                                            Окраска стен
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Оклеивание стен обоями"
+                                            data-description="Оклеивание стен обоями с ровным рисунком и незаметными швами."
+                                          >
+                                            Оклеивание стен обоями
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Укладка керамической плитки"
+                                            data-description="Укладка керамической плитки на полы и стены с правильным выравниванием, запилом внешних углов под 45 градусов и затиркой швов."
+                                          >
+                                            Укладка керамической плитки на пол и стены
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+            
+                              <!-- Skill 6: Installation of doors and windows -->
+                              <div class="branch">
+                                <div class="branch-inner">
+                                  <div class="node node-skill">
+                                    Установка дверей и окон
+                                  </div>
+                                  <div class="children">
+                                    <div class="children-row">
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Установка дверей"
+                                            data-description="Монтаж коробок и полотен дверей с правильными зазорами и креплением."
+                                          >
+                                            Установка дверей
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Установка окон"
+                                            data-description="Установка оконных блоков с правильным креплением и закрытием."
+                                          >
+                                            Установка окон
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Отделка углов"
+                                            data-description="Отделка углов дверей и окон для чистого вида внутреннего пространства."
+                                          >
+                                            Отделка углов
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Установка подоконников"
+                                            data-description="Установка подоконников с правильным креплением и закрытием."
+                                          >
+                                            Установка подоконников
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+            
+                              <!-- Skill 7: Furniture design -->
+                              <div class="branch">
+                                <div class="branch-inner">
+                                  <div class="node node-skill">
+                                    Проектирование мебели
+                                  </div>
+                                  <div class="children">
+                                    <div class="children-row">
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Проектирование мебели в K3Furniture"
+                                            data-description="Разработка проектов мебели с точными размерами в K3Furniture."
+                                          >
+                                            Проектирование мебели в K3Furniture
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Проектирование мебели в Autodesk Inventor"
+                                            data-description="Моделирование сборных мебелей и отдельных деталей в Autodesk Inventor."
+                                          >
+                                            Проектирование мебели и деталей в Autodesk Inventor
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+            
+                              <!-- Skill 8: Assembly and installation of furniture and appliances -->
+                              <div class="branch">
+                                <div class="branch-inner">
+                                  <div class="node node-skill">
+                                    Сборка и установка мебели и бытовой техники
+                                  </div>
+                                  <div class="children">
+                                    <div class="children-row">
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Сборка мебели и кухонь"
+                                            data-description="Сборка модульной мебели и кухонь по чертежам."
+                                          >
+                                            Сборка мебели и кухонь
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Установка и подключение плиты"
+                                            data-description="Монтаж плит и безопасное подключение к электричеству / газу."
+                                          >
+                                            Установка и подключение плиты
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Installing and connecting the sink"
+                                            data-description="Установка и подключение мойки и крана."
+                                          >
+                                            Установка и подключение мойки и крана
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Euro-cutting of the countertop"
+                                            data-description="Выполнение евро-соединений на столешницах для чистого вида углов."
+                                          >
+                                            Евро-обрезка столешницы
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <div class="branch">
+                                        <div class="branch-inner">
+                                          <div
+                                            class="node node-ability"
+                                            data-title="Установка встроенной техники"
+                                            data-description="Установка и подключение встроенной техники (стиральной машины, духовки, микроволновки)."
+                                          >
+                                            Установка и подключение встроенной техники (стиральной машины, духовки, микроволновки)
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <!-- End Construction & Repair skills -->
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+          <!-- Marketing -->
+          <div class="branch">
+            <div class="branch-inner">
+              <div
+                class="node node-direction"
+                data-title="Marketing"
+                data-description="Understanding audiences and crafting messages that attract and convert."
+              >
+                Marketing
+              </div>
+
+              <div class="children">
+                <div class="children-row">
+                  <!-- Skill 1 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Digital Marketing
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="SEO"
+                                data-description="Improving visibility in search engines with on‑page and technical optimization."
+                              >
+                                SEO (search engine optimization)
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="PPC campaigns"
+                                data-description="Planning and optimizing paid search or social advertising."
+                              >
+                                Paid ads (PPC campaigns)
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Web analytics"
+                                data-description="Reading analytics dashboards and turning data into decisions."
+                              >
+                                Web analytics &amp; reporting
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 2 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Content Marketing
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Copywriting"
+                                data-description="Writing clear, persuasive copy for web, email, and ads."
+                              >
+                                Copywriting &amp; storytelling
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Editorial planning"
+                                data-description="Creating content calendars aligned with goals and launches."
+                              >
+                                Editorial planning &amp; calendars
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Social media content"
+                                data-description="Designing posts that fit each platform and audience."
+                              >
+                                Social media content creation
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 3 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Brand Management
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Brand positioning"
+                                data-description="Clarifying who a brand is for and how it is different."
+                              >
+                                Brand positioning &amp; messaging
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Visual identity"
+                                data-description="Keeping logos, colors, and style consistent across materials."
+                              >
+                                Visual identity consistency
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Audience research"
+                                data-description="Interviewing and surveying customers to understand their needs."
+                              >
+                                Audience &amp; market research
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End skills -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Project Management -->
+          <div class="branch">
+            <div class="branch-inner">
+              <div
+                class="node node-direction"
+                data-title="Project Management"
+                data-description="Delivering projects on time and within scope by planning, coordinating and tracking work."
+              >
+                Project Management
+              </div>
+
+              <div class="children">
+                <div class="children-row">
+                  <!-- Skill 1 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Planning &amp; Scheduling
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Work breakdown structures"
+                                data-description="Breaking complex work into manageable tasks and milestones."
+                              >
+                                Work breakdown structures (WBS)
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Gantt charts"
+                                data-description="Visualizing timelines and dependencies between tasks."
+                              >
+                                Gantt charts &amp; timelines
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Resource allocation"
+                                data-description="Assigning people and budget to tasks realistically."
+                              >
+                                Resource allocation
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 2 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Risk Management
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Risk identification"
+                                data-description="Collecting potential risks early from stakeholders and experience."
+                              >
+                                Risk identification &amp; analysis
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Mitigation planning"
+                                data-description="Defining actions to reduce the chance or impact of risks."
+                              >
+                                Mitigation planning
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Issue tracking"
+                                data-description="Logging, prioritizing, and resolving issues as a project runs."
+                              >
+                                Issue tracking &amp; escalation
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 3 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Stakeholder Communication
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Status reporting"
+                                data-description="Sharing progress updates that are brief but informative."
+                              >
+                                Status reporting &amp; updates
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Meeting facilitation"
+                                data-description="Guiding meetings to decisions and clear next steps."
+                              >
+                                Meeting facilitation
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Conflict resolution"
+                                data-description="Handling disagreements constructively and keeping work moving."
+                              >
+                                Conflict resolution
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End skills -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Teaching -->
+          <div class="branch">
+            <div class="branch-inner">
+              <div
+                class="node node-direction"
+                data-title="Teaching"
+                data-description="Helping others learn by planning lessons, guiding classes and giving feedback."
+              >
+                Teaching
+              </div>
+
+              <div class="children">
+                <div class="children-row">
+                  <!-- Skill 1 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Lesson Planning
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Learning objectives"
+                                data-description="Defining clear outcomes for what learners should know or do."
+                              >
+                                Learning objectives design
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Session structure"
+                                data-description="Balancing theory, examples, and practice in each lesson."
+                              >
+                                Structuring class sessions
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Teaching materials"
+                                data-description="Selecting slides, exercises and tools that support learning."
+                              >
+                                Selecting teaching materials
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 2 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Classroom Management
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Rules & routines"
+                                data-description="Setting expectations so sessions run smoothly and respectfully."
+                              >
+                                Establishing rules &amp; routines
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Group dynamics"
+                                data-description="Managing different personalities and keeping everyone involved."
+                              >
+                                Managing group dynamics
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Positive behavior"
+                                data-description="Encouraging participation and handling disruptions constructively."
+                              >
+                                Positive behavior support
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 3 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Assessment &amp; Feedback
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Quizzes & tests"
+                                data-description="Designing assessments that genuinely measure understanding."
+                              >
+                                Designing quizzes &amp; tests
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Rubrics"
+                                data-description="Creating transparent grading criteria students can understand."
+                              >
+                                Rubrics &amp; grading criteria
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Student feedback"
+                                data-description="Giving comments that are specific, kind, and actionable."
+                              >
+                                Constructive student feedback
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End skills -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Programming -->
+          <div class="branch">
+            <div class="branch-inner">
+              <div
+                class="node node-direction"
+                data-title="Programming"
+                data-description="Designing and building software, from web interfaces to complex logic."
+              >
+                Programming
+              </div>
+
+              <div class="children">
+                <div class="children-row">
+                  <!-- Skill 1 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Web Development
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="HTML & CSS"
+                                data-description="Building responsive layouts that adapt to desktop and mobile."
+                              >
+                                HTML, CSS &amp; responsive layout
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="JavaScript"
+                                data-description="Adding interactivity using modern JavaScript and the DOM."
+                              >
+                                JavaScript &amp; DOM manipulation
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="REST APIs"
+                                data-description="Connecting front‑end interfaces to server APIs."
+                              >
+                                REST APIs integration
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 2 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Object-Oriented Programming
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Classes & inheritance"
+                                data-description="Designing class hierarchies to reuse common behavior."
+                              >
+                                Classes &amp; inheritance
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Encapsulation"
+                                data-description="Hiding implementation details behind clear interfaces."
+                              >
+                                Encapsulation &amp; interfaces
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Design patterns"
+                                data-description="Applying common solutions like MVC, factory, and observer."
+                              >
+                                Design patterns basics
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 3 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Algorithms &amp; Data Structures
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Sorting & searching"
+                                data-description="Choosing efficient ways to search and order data."
+                              >
+                                Sorting &amp; searching
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Core structures"
+                                data-description="Using arrays, lists, trees, and graphs appropriately."
+                              >
+                                Arrays, lists, trees, graphs
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Complexity thinking"
+                                data-description="Reasoning about performance using Big‑O notation."
+                              >
+                                Complexity (Big-O) thinking
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End skills -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cooking -->
+          <div class="branch">
+            <div class="branch-inner">
+              <div
+                class="node node-direction"
+                data-title="Cooking"
+                data-description="Preparing food with good technique, timing, and flavor balance."
+              >
+                Cooking
+              </div>
+
+              <div class="children">
+                <div class="children-row">
+                  <!-- Skill 1 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Knife Skills
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Chopping & dicing"
+                                data-description="Cutting ingredients into even pieces for consistent cooking."
+                              >
+                                Chopping, dicing, slicing
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Knife safety"
+                                data-description="Holding and moving knives safely in a busy kitchen."
+                              >
+                                Knife safety &amp; handling
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Sharpening"
+                                data-description="Maintaining sharp blades using honing rods and stones."
+                              >
+                                Knife maintenance &amp; sharpening
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 2 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Heat Control
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Sautéing & searing"
+                                data-description="Using high heat for flavorful browning without burning."
+                              >
+                                Sautéing &amp; pan‑searing
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Roasting & baking"
+                                data-description="Timing dishes that cook through in the oven."
+                              >
+                                Roasting &amp; baking
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Simmering & braising"
+                                data-description="Slow‑cooking foods until they are tender and flavorful."
+                              >
+                                Simmering &amp; braising
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 3 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Flavor Pairing
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Balancing flavors"
+                                data-description="Adjusting salt, acid and fat so dishes taste complete."
+                              >
+                                Balancing salt, acid, fat
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Herbs & spices"
+                                data-description="Matching herbs and spices to cuisines and ingredients."
+                              >
+                                Herb &amp; spice combinations
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Tasting & adjusting"
+                                data-description="Tasting food as it cooks and tweaking seasoning."
+                              >
+                                Tasting &amp; adjusting seasoning
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End skills -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Arts -->
+          <div class="branch">
+            <div class="branch-inner">
+              <div
+                class="node node-direction"
+                data-title="Arts"
+                data-description="Expressing ideas visually, graphically, and through music."
+              >
+                Arts
+              </div>
+
+              <div class="children">
+                <div class="children-row">
+                  <!-- Skill 1 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Drawing
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Line & contour"
+                                data-description="Sketching outlines and shapes with confident line work."
+                              >
+                                Line &amp; contour drawing
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Shading"
+                                data-description="Creating a sense of light, shadow, and volume."
+                              >
+                                Shading &amp; value
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Perspective"
+                                data-description="Representing 3D space on a 2D surface accurately."
+                              >
+                                Perspective &amp; proportion
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 2 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Graphic Design
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Layout & composition"
+                                data-description="Arranging elements on a page or screen for clarity."
+                              >
+                                Layout &amp; composition
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Typography"
+                                data-description="Choosing and pairing fonts for readability and style."
+                              >
+                                Typography basics
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Color theory"
+                                data-description="Using color harmonies and contrast effectively."
+                              >
+                                Color theory
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 3 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Music Performance
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Rhythm & timing"
+                                data-description="Keeping a steady tempo and playing in time with others."
+                              >
+                                Rhythm &amp; timing
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Technique & practice"
+                                data-description="Building skill through structured practice routines."
+                              >
+                                Technique &amp; practice routines
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Ensemble playing"
+                                data-description="Listening and adapting while performing with a group."
+                              >
+                                Ensemble playing / performance
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End skills -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Robotics -->
+          <div class="branch">
+            <div class="branch-inner">
+              <div
+                class="node node-direction"
+                data-title="Robotics"
+                data-description="Designing and programming systems that interact with the physical world."
+              >
+                Robotics
+              </div>
+
+              <div class="children">
+                <div class="children-row">
+                  <!-- Skill 1 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Mechanical Design
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="CAD modeling"
+                                data-description="Using CAD tools to sketch and refine mechanical parts."
+                              >
+                                CAD modeling (basic)
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Linkages & actuators"
+                                data-description="Designing joints and movement using motors or servos."
+                              >
+                                Linkages &amp; actuators
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Prototyping"
+                                data-description="Building and iterating on physical prototypes."
+                              >
+                                Prototyping &amp; assembly
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 2 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Embedded Systems
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Microcontroller programming"
+                                data-description="Writing code for boards like Arduino or similar devices."
+                              >
+                                Microcontroller programming
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="GPIO & peripherals"
+                                data-description="Controlling LEDs, sensors, and motors via GPIO."
+                              >
+                                GPIO &amp; peripheral control
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Serial communication"
+                                data-description="Communicating using protocols like UART and I²C."
+                              >
+                                Serial communication (UART, I²C)
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 3 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Sensors &amp; Control
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Sensor calibration"
+                                data-description="Configuring sensors so their readings are accurate and stable."
+                              >
+                                Sensor selection &amp; calibration
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Feedback loops"
+                                data-description="Using basic control theory (like PID) to stabilize behavior."
+                              >
+                                Feedback loops (PID basics)
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Data acquisition"
+                                data-description="Collecting and filtering sensor data for decision making."
+                              >
+                                Data acquisition &amp; filtering
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End skills -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sports -->
+          <div class="branch">
+            <div class="branch-inner">
+              <div
+                class="node node-direction"
+                data-title="Sports"
+                data-description="Training the body and mind through physical activity and teamwork."
+              >
+                Sports
+              </div>
+
+              <div class="children">
+                <div class="children-row">
+                  <!-- Skill 1 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Endurance Training
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Aerobic conditioning"
+                                data-description="Building cardiovascular fitness with steady‑state training."
+                              >
+                                Aerobic conditioning
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Pacing"
+                                data-description="Controlling effort across a run, ride, or event."
+                              >
+                                Pacing &amp; heart‑rate control
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Periodization"
+                                data-description="Planning training blocks, peaks, and recovery."
+                              >
+                                Training periodization
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 2 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Strength Training
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Technique & form"
+                                data-description="Learning correct movement patterns for major lifts."
+                              >
+                                Technique &amp; form
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Progressive overload"
+                                data-description="Systematically increasing training load over time."
+                              >
+                                Progressive overload planning
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Mobility & injury prevention"
+                                data-description="Balancing strength with flexibility and recovery."
+                              >
+                                Injury prevention &amp; mobility
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Skill 3 -->
+                  <div class="branch">
+                    <div class="branch-inner">
+                      <div class="node node-skill">
+                        Teamwork &amp; Strategy
+                      </div>
+                      <div class="children">
+                        <div class="children-row">
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="On‑field communication"
+                                data-description="Calling plays and sharing information during games."
+                              >
+                                Communication on the field
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Game tactics"
+                                data-description="Understanding positioning and strategy for your sport."
+                              >
+                                Game tactics &amp; positioning
+                              </div>
+                            </div>
+                          </div>
+                          <div class="branch">
+                            <div class="branch-inner">
+                              <div
+                                class="node node-ability"
+                                data-title="Leadership"
+                                data-description="Supporting teammates and taking responsibility when needed."
+                              >
+                                Leadership &amp; support roles
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- End skills -->
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- End all Directions -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-backdrop" id="nodeModalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="nodeModalTitle">
+      <button class="modal-close" type="button" aria-label="Close">&times;</button>
+      <h2 class="modal-title" id="nodeModalTitle">Title</h2>
+      <div class="modal-body" id="nodeModalBody">
+        Description goes here.
+      </div>
+      <div class="modal-footer">
+        <button class="modal-button" type="button" id="nodeModalOk">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openNodeModal(title, description) {
+      const backdrop = document.getElementById("nodeModalBackdrop");
+      const titleEl = document.getElementById("nodeModalTitle");
+      const bodyEl = document.getElementById("nodeModalBody");
+
+      titleEl.textContent = title || "Info";
+      bodyEl.textContent =
+        description || "Additional information about this item.";
+      backdrop.classList.add("modal--open");
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+
+    function closeNodeModal() {
+      const backdrop = document.getElementById("nodeModalBackdrop");
+      backdrop.classList.remove("modal--open");
+      backdrop.setAttribute("aria-hidden", "true");
+    }
+
+    function attachTreeHandlers() {
+      // Directions: toggle skills + show modal
+      document.querySelectorAll(".node-direction").forEach((node) => {
+        node.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const branch = node.closest(".branch");
+          if (branch) {
+            branch.classList.toggle("branch--open");
+          }
+          const title = node.getAttribute("data-title") || node.textContent.trim();
+          const desc = node.getAttribute("data-description") || "";
+          openNodeModal(title, desc);
+        });
+      });
+
+      // Skills: ONLY toggle abilities (no modal)
+      document.querySelectorAll(".node-skill").forEach((node) => {
+        node.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const branch = node.closest(".branch");
+          if (branch) {
+            branch.classList.toggle("branch--open");
+          }
+        });
+      });
+
+      // Abilities: show modal, no further tree expansion
+      document.querySelectorAll(".node-ability").forEach((node) => {
+        node.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const title = node.getAttribute("data-title") || node.textContent.trim();
+          const desc = node.getAttribute("data-description") || "";
+          openNodeModal(title, desc);
+        });
+      });
+    }
+
+    function attachModalHandlers() {
+      const backdrop = document.getElementById("nodeModalBackdrop");
+      const closeBtn = backdrop.querySelector(".modal-close");
+      const okBtn = document.getElementById("nodeModalOk");
+      const modal = backdrop.querySelector(".modal");
+
+      closeBtn.addEventListener("click", () => closeNodeModal());
+      okBtn.addEventListener("click", () => closeNodeModal());
+
+      backdrop.addEventListener("click", (event) => {
+        if (!modal.contains(event.target)) {
+          closeNodeModal();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          closeNodeModal();
+        }
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      attachTreeHandlers();
+      attachModalHandlers();
+    });
+  </script>
+</body>
+</html>
