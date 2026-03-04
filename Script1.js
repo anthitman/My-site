@@ -1,20 +1,18 @@
-// JavaScript source code
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Получаем все элементы li, у которых есть вложенный ul
+    // ГЏГ®Г«ГіГ·Г ГҐГ¬ ГўГ±ГҐ ГЅГ«ГҐГ¬ГҐГ­ГІГ» li, Гі ГЄГ®ГІГ®Г°Г»Гµ ГҐГ±ГІГј ГўГ«Г®Г¦ГҐГ­Г­Г»Г© ul
     const treeItems = document.querySelectorAll('.tree li');
 
     treeItems.forEach(li => {
         const childUl = li.querySelector('ul');
 
         if (childUl) {
-            // Скрываем вложенный список (на случай, если class open не добавлен)
+            // Г‘ГЄГ°Г»ГўГ ГҐГ¬ ГўГ«Г®Г¦ГҐГ­Г­Г»Г© Г±ГЇГЁГ±Г®ГЄ (Г­Г  Г±Г«ГіГ·Г Г©, ГҐГ±Г«ГЁ class open Г­ГҐ Г¤Г®ГЎГ ГўГ«ГҐГ­)
             childUl.classList.remove('open');
-            // Добавляем класс cursor pointer для li с детьми
+            // Г„Г®ГЎГ ГўГ«ГїГҐГ¬ ГЄГ«Г Г±Г± cursor pointer Г¤Г«Гї li Г± Г¤ГҐГІГјГ¬ГЁ
             li.style.cursor = 'pointer';
 
             li.addEventListener('click', (e) => {
-                // Предотвращаем всплытие, чтобы клик по дочернему не закрывал родителей
+                // ГЏГ°ГҐГ¤Г®ГІГўГ°Г Г№Г ГҐГ¬ ГўГ±ГЇГ«Г»ГІГЁГҐ, Г·ГІГ®ГЎГ» ГЄГ«ГЁГЄ ГЇГ® Г¤Г®Г·ГҐГ°Г­ГҐГ¬Гі Г­ГҐ Г§Г ГЄГ°Г»ГўГ Г« Г°Г®Г¤ГЁГІГҐГ«ГҐГ©
                 e.stopPropagation();
 
                 const isOpen = childUl.classList.contains('open');
@@ -27,9 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         } else {
-            // Если у li нет детей, курсор обычный
+            // Г…Г±Г«ГЁ Гі li Г­ГҐГІ Г¤ГҐГІГҐГ©, ГЄГіГ°Г±Г®Г° Г®ГЎГ»Г·Г­Г»Г©
             li.style.cursor = 'default';
             li.style.userSelect = 'text';
         }
     });
+
 });
